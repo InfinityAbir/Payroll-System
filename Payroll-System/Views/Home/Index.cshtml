@@ -1,8 +1,175 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
+
+<div class="position-relative overflow-hidden">
+
+    <!-- Animated Particle Background -->
+    <canvas id="particles"></canvas>
+
+    <!-- Hero Section -->
+    <div class="text-center py-5 position-relative" style="z-index:1;">
+        <h1 class="display-4 fw-bold hero-text mb-3">Payroll Management System</h1>
+        <p class="lead text-light mb-4">Manage Employees, Attendance, and Payroll with ease</p>
+        <a href="@Url.Action("Index", "Employees")" class="btn btn-light btn-lg shadow-lg hover-scale">Get Started</a>
+    </div>
+
+    <!-- Features Section -->
+    <div class="container py-5 text-center">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-lg border-0 hover-tilt h-100">
+                    <div class="card-body">
+                        <i class="bi bi-people-fill fs-1 text-primary mb-3"></i>
+                        <h5 class="card-title fw-bold">Employees</h5>
+                        <p class="card-text">Add, edit, and manage all your employees easily.</p>
+                        <a href="@Url.Action("Index", "Employees")" class="btn btn-primary btn-sm">View Employees</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-lg border-0 hover-tilt h-100">
+                    <div class="card-body">
+                        <i class="bi bi-calendar-check-fill fs-1 text-success mb-3"></i>
+                        <h5 class="card-title fw-bold">Attendance</h5>
+                        <p class="card-text">Track daily attendance and leave records of your employees.</p>
+                        <a href="@Url.Action("Index", "Attendances")" class="btn btn-success btn-sm">View Attendance</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-lg border-0 hover-tilt h-100">
+                    <div class="card-body">
+                        <i class="bi bi-cash-stack fs-1 text-warning mb-3"></i>
+                        <h5 class="card-title fw-bold">Payroll</h5>
+                        <p class="card-text">Manage salaries, allowances, deductions, and net pay for employees.</p>
+                        <a href="@Url.Action("Index", "Payrolls")" class="btn btn-warning btn-sm text-dark">View Payrolls</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role-based Quick Access -->
+    <div class="bg-light py-5 position-relative" style="z-index:1;">
+        <div class="container text-center">
+            <h3 class="fw-bold mb-4">Quick Access</h3>
+            @if (User.IsInRole("Admin"))
+            {
+                <a class="btn btn-primary me-2 mb-2" href="@Url.Action("Index", "Employees")">Admin Dashboard</a>
+                <a class="btn btn-success me-2 mb-2" href="@Url.Action("Index", "Payrolls")">Manage Payroll</a>
+            }
+            @if (User.IsInRole("Employee"))
+            {
+                <a class="btn btn-info me-2 mb-2" href="@Url.Action("MyAttendance", "Attendances")">My Attendance</a>
+                <a class="btn btn-warning me-2 mb-2" href="@Url.Action("MyPayroll", "Payrolls")">My Payroll</a>
+            }
+        </div>
+    </div>
 </div>
+
+<style>
+    body, html {
+        height: 100%;
+        margin: 0;
+        overflow-x: hidden;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    #particles {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .hover-scale:hover {
+        transform: scale(1.05);
+        transition: transform 0.3s ease;
+    }
+
+    .hover-tilt {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .hover-tilt:hover {
+            transform: rotateX(5deg) rotateY(5deg) scale(1.03);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+
+    .hero-text {
+        background: linear-gradient(90deg, #f6d365, #fda085, #a1c4fd, #c2e9fb);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: gradientShift 5s infinite alternate;
+    }
+
+    @@keyframes gradientShift {
+        0%
+
+    {
+        background-position: 0% 50%;
+    }
+
+    100% {
+        background-position: 100% 50%;
+    }
+
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Simple particle animation
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particlesArray = [];
+    class Particle {
+        constructor(){
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.size = Math.random() * 3 + 1;
+            this.speedX = Math.random() * 1 - 0.5;
+            this.speedY = Math.random() * 1 - 0.5;
+        }
+        update(){
+            this.x += this.speedX;
+            this.y += this.speedY;
+            if(this.x < 0 || this.x > canvas.width) this.speedX = -this.speedX;
+            if(this.y < 0 || this.y > canvas.height) this.speedY = -this.speedY;
+        }
+        draw(){
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function initParticles(){
+        for(let i=0; i<100; i++){
+            particlesArray.push(new Particle());
+        }
+    }
+
+    function animate(){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        particlesArray.forEach(p => {p.update(); p.draw();});
+        requestAnimationFrame(animate);
+    }
+
+    initParticles();
+    animate();
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+</script>
