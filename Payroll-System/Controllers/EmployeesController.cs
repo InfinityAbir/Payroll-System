@@ -1,23 +1,25 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PayrollSystem.Web.Data;
 using PayrollSystem.Web.Models;
+using PayrollSystem.Web.ViewModels;
 
-namespace Payroll_System.Controllers
+namespace PayrollSystem.Web.Controllers
 {
+    [Authorize] // all actions require login
     public class EmployeesController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
 
         public EmployeesController(
             ApplicationDbContext context,
-            UserManager<IdentityUser> userManager,
+            UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager)
         {
             _context = context;
@@ -25,138 +27,160 @@ namespace Payroll_System.Controllers
             _roleManager = roleManager;
         }
 
-        // GET: Employees
+        // List everyone (any authenticated user)
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Employee.ToListAsync());
+            var list = await _context.Employees.ToListAsync();
+            return View(list);
         }
 
-        // GET: Employees/Details/5
+        // Details (any authenticated user)
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
 
-            var employee = await _context.Employee
-                .FirstOrDefaultAsync(e => e.Id == id);
+            var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == id);
             if (employee == null) return NotFound();
 
             return View(employee);
         }
 
-        // GET: Employees/Create
+        // Create (Admin only)
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
-            return View();
+            return View(new EmployeeCreateViewModel());
         }
 
-        // POST: Employees/Create
+        // Create (Admin only)
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("FullName,Designation,BasicSalary,JoiningDate")] Employee employee, string password)
+        public async Task<IActionResult> Create(EmployeeCreateViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var baseName = model.FullName.Replace(" ", "").ToLower();
+            var userName = baseName;
+            var email = $"{baseName}@company.com";
+
+            int counter = 1;
+            while (await _userManager.FindByNameAsync(userName) != null)
             {
-                // 1. Create Identity user
-                var user = new IdentityUser
-                {
-                    UserName = employee.FullName.Replace(" ", "").ToLower(),
-                    Email = employee.FullName.Replace(" ", "").ToLower() + "@company.com"
-                };
-
-                var result = await _userManager.CreateAsync(user, password);
-                if (result.Succeeded)
-                {
-                    // 2. Ensure Employee role exists
-                    if (!await _roleManager.RoleExistsAsync("Employee"))
-                        await _roleManager.CreateAsync(new IdentityRole("Employee"));
-
-                    await _userManager.AddToRoleAsync(user, "Employee");
-
-                    // 3. Link Employee to IdentityUser
-                    employee.UserId = user.Id;
-
-                    _context.Add(employee);
-                    await _context.SaveChangesAsync();
-                    return RedirectToAction(nameof(Index));
-                }
-
-                // Add Identity errors to ModelState
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError("", error.Description);
-                }
+                userName = $"{baseName}{counter}";
+                email = $"{userName}@company.com";
+                counter++;
             }
-            return View(employee);
+
+            var user = new ApplicationUser
+            {
+                UserName = userName,
+                Email = email,
+                FullName = model.FullName,
+                Designation = model.Designation,
+                JoiningDate = model.JoiningDate,
+                BasicSalary = model.BasicSalary
+            };
+
+            var result = await _userManager.CreateAsync(user, model.Password);
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                    ModelState.AddModelError("", error.Description);
+
+                return View(model);
+            }
+
+            if (!await _roleManager.RoleExistsAsync("Employee"))
+                await _roleManager.CreateAsync(new IdentityRole("Employee"));
+
+            await _userManager.AddToRoleAsync(user, "Employee");
+
+            var employee = new Employee
+            {
+                FullName = model.FullName,
+                Designation = model.Designation,
+                BasicSalary = model.BasicSalary,
+                JoiningDate = model.JoiningDate,
+                UserId = user.Id
+            };
+
+            _context.Employees.Add(employee);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
         }
 
-        // GET: Employees/Edit/5
+        // Edit (Admin only)
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
 
-            var employee = await _context.Employee.FindAsync(id);
+            var employee = await _context.Employees.FindAsync(id);
             if (employee == null) return NotFound();
 
             return View(employee);
         }
 
-        // POST: Employees/Edit/5
+        // Edit (Admin only)
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,FullName,Designation,BasicSalary,JoiningDate,UserId")] Employee employee)
+        public async Task<IActionResult> Edit(int id, Employee employee)
         {
             if (id != employee.Id) return NotFound();
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
+                return View(employee);
+
+            try
             {
-                try
-                {
-                    _context.Update(employee);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!EmployeeExists(employee.Id)) return NotFound();
-                    else throw;
-                }
-                return RedirectToAction(nameof(Index));
+                _context.Update(employee);
+                await _context.SaveChangesAsync();
             }
-            return View(employee);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_context.Employees.Any(e => e.Id == employee.Id))
+                    return NotFound();
+
+                throw;
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
-        // GET: Employees/Delete/5
+        // Delete (Admin only)
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
 
-            var employee = await _context.Employee
-                .FirstOrDefaultAsync(e => e.Id == id);
+            var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == id);
             if (employee == null) return NotFound();
 
             return View(employee);
         }
 
-        // POST: Employees/Delete/5
+        // Delete (Admin only)
+        [Authorize(Roles = "Admin")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var employee = await _context.Employee.FindAsync(id);
+            var employee = await _context.Employees.FindAsync(id);
             if (employee != null)
             {
-                // Optionally: delete the linked Identity user
                 var user = await _userManager.FindByIdAsync(employee.UserId);
-                if (user != null) await _userManager.DeleteAsync(user);
+                if (user != null)
+                    await _userManager.DeleteAsync(user);
 
-                _context.Employee.Remove(employee);
+                _context.Employees.Remove(employee);
                 await _context.SaveChangesAsync();
             }
-            return RedirectToAction(nameof(Index));
-        }
 
-        private bool EmployeeExists(int id)
-        {
-            return _context.Employee.Any(e => e.Id == id);
+            return RedirectToAction(nameof(Index));
         }
     }
 }

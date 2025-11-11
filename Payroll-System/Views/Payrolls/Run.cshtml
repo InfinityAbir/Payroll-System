@@ -1,0 +1,35 @@
+﻿@{
+    ViewData["Title"] = "Run Payroll";
+}
+
+<h2>Run Payroll</h2>
+
+<form asp-action="Run" method="post">
+    <div class="mb-3">
+        <label class="form-label">Year</label>
+        <select name="year" class="form-select" required>
+            @foreach (var y in (IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewData["Years"])
+            {
+                <option value="@y.Value">@y.Text</option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Month</label>
+        <select name="month" class="form-select" required>
+            @foreach (var m in (IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewData["Months"])
+            {
+                <option value="@m.Value">@m.Text</option>
+            }
+        </select>
+    </div>
+
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="overwrite" name="overwrite" value="true" />
+        <label class="form-check-label" for="overwrite">Overwrite existing payroll for this month</label>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Run Payroll</button>
+    <a asp-action="Index" class="btn btn-secondary">Back to list</a>
+</form>

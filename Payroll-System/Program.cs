@@ -2,11 +2,15 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PayrollSystem.Web.Data;
 using PayrollSystem.Web.Models;
+using PayrollSystem.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Register PayrollService (single registration)
+builder.Services.AddScoped<IPayrollService, PayrollService>();
 
 // Configure EF Core
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -34,8 +38,12 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+// Improved error handling and dev exception page
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
@@ -55,11 +63,26 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// Seed roles on startup
+// Seed roles & admin on startup (safe call with logging)
 using (var scope = app.Services.CreateScope())
 {
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    await SeedRoles.InitializeRoles(roleManager);
+    var services = scope.ServiceProvider;
+    try
+    {
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        await SeedRoles.InitializeRoles(roleManager);
+
+        // seed admin user (uses same scoped service provider)
+        await DbInitializer.InitializeAsync(services);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetService<ILogger<Program>>();
+        if (logger != null)
+            logger.LogError(ex, "An error occurred while seeding the database on startup.");
+        else
+            Console.WriteLine("Seeding error: " + ex);
+    }
 }
 
 app.Run();

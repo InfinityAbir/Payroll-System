@@ -1,0 +1,20 @@
+﻿@{
+    ViewData["Title"] = "Access Denied";
+    var returnUrl = (string)(ViewData["ReturnUrl"] ?? "");
+}
+
+<div class="container py-5">
+    <div class="alert alert-danger shadow-sm">
+        <h4 class="alert-heading">Access denied</h4>
+        <p>You don't have permission to access that page.</p>
+        @if (!string.IsNullOrEmpty(returnUrl))
+        {
+            <p class="mb-0"><small>Requested: @returnUrl</small></p>
+        }
+    </div>
+
+    <div class="mt-3">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-primary me-2">Go to Home</a>
+        <a asp-controller="Account" asp-action="Login" class="btn btn-outline-secondary">Switch Account</a>
+    </div>
+</div>

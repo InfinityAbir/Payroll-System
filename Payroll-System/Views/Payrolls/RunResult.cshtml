@@ -1,0 +1,38 @@
+﻿@model IEnumerable<PayrollSystem.Web.Models.Payroll>
+@{
+    ViewData["Title"] = "Payroll Results";
+}
+
+<h2>Payroll Results for @Model.FirstOrDefault()?.SalaryMonth.ToString("MMMM yyyy")</h2>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No payroll records generated for this month.</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Employee</th>
+                <th>Basic</th>
+                <th>Allowances</th>
+                <th>Deductions</th>
+                <th>Net</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td>@p.Employee?.FullName</td>
+                    <td>@String.Format("{0:N2}", p.BasicSalary)</td>
+                    <td>@String.Format("{0:N2}", p.Allowances)</td>
+                    <td>@String.Format("{0:N2}", p.Deductions)</td>
+                    <td>@String.Format("{0:N2}", p.NetSalary)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <a asp-action="Index" class="btn btn-secondary">Back to payroll list</a>
+}

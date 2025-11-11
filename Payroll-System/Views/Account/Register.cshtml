@@ -10,7 +10,10 @@
         <h2 class="text-center mb-4">Create Account</h2>
 
         <form asp-action="Register" method="post" id="registerForm">
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3" id="errorSummary"></div>
+            <!-- REQUIRED: ReturnUrl -->
+            <input type="hidden" name="returnUrl" value="@(ViewData["ReturnUrl"] ?? "")" />
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
             <div class="form-floating mb-3">
                 <input asp-for="Email" class="form-control" placeholder="Email" />
@@ -22,9 +25,7 @@
                 <input asp-for="Password" class="form-control" placeholder="Password" id="passwordInput" />
                 <label asp-for="Password">Password</label>
                 <span asp-validation-for="Password" class="text-danger"></span>
-                <button type="button" class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2" onclick="togglePassword('passwordInput')">
-                    Show
-                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2" onclick="togglePassword('passwordInput')">Show</button>
                 <div id="passwordStrength" class="mt-1"></div>
             </div>
 
@@ -32,39 +33,30 @@
                 <input asp-for="ConfirmPassword" class="form-control" placeholder="Confirm Password" id="confirmPasswordInput" />
                 <label asp-for="ConfirmPassword">Confirm Password</label>
                 <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
-                <button type="button" class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2" onclick="togglePassword('confirmPasswordInput')">
-                    Show
-                </button>
-            </div>
-
-            <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" id="rememberMe" />
-                <label class="form-check-label" for="rememberMe">
-                    Remember Me
-                </label>
+                <button type="button" class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2" onclick="togglePassword('confirmPasswordInput')">Show</button>
             </div>
 
             <button type="submit" class="btn btn-primary w-100 py-2 rounded-3 shadow-sm hover-scale">Register</button>
         </form>
 
-        <p class="text-center mt-3">Already have an account? <a asp-action="Login">Login</a></p>
+        <p class="text-center mt-3">
+            Already have an account?
+            <a asp-action="Login" asp-route-returnUrl="@(ViewData["ReturnUrl"])">Login</a>
+        </p>
     </div>
 </div>
 
 <style>
     @@keyframes fadeIn {
-        from
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
 
-    {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     .hover-scale:hover {
@@ -83,7 +75,7 @@
     }
 
     #passwordStrength {
-        font-size: 0.875rem;
+        font-size: .875rem;
     }
 
         #passwordStrength.weak {
@@ -99,33 +91,24 @@
         }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    function togglePassword(inputId) {
-        const input = document.getElementById(inputId);
+    function togglePassword(id) {
+        const input = document.getElementById(id);
         input.type = input.type === 'password' ? 'text' : 'password';
     }
 
     const passwordInput = document.getElementById('passwordInput');
     const strengthDiv = document.getElementById('passwordStrength');
 
-    passwordInput.addEventListener('input', function () {
+    passwordInput.addEventListener('input', () => {
         const val = passwordInput.value;
-        let strength = '';
-        if(val.length < 6) strength = 'Weak';
-        else if(val.match(/[A-Z]/) && val.match(/[0-9]/) && val.length >= 6) strength = 'Strong';
-        else strength = 'Medium';
+        let strength = "";
+
+        if (val.length < 6) strength = "Weak";
+        else if (/[A-Z]/.test(val) && /[0-9]/.test(val)) strength = "Strong";
+        else strength = "Medium";
 
         strengthDiv.textContent = `Strength: ${strength}`;
-        strengthDiv.className = '';
-        if(strength === 'Weak') strengthDiv.classList.add('weak');
-        if(strength === 'Medium') strengthDiv.classList.add('medium');
-        if(strength === 'Strong') strengthDiv.classList.add('strong');
-    });
-
-    // Animated error messages
-    const form = document.getElementById('registerForm');
-    form.addEventListener('submit', function() {
-        strengthDiv.classList.add('fadeIn');
+        strengthDiv.className = strength.toLowerCase();
     });
 </script>

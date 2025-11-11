@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿// Data/ApplicationDbContext.cs
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using PayrollSystem.Web.Models;
 
@@ -13,6 +14,8 @@ namespace PayrollSystem.Web.Data
 
         public DbSet<Attendance> Attendances { get; set; }
         public DbSet<Payroll> Payrolls { get; set; }
-        public DbSet<PayrollSystem.Web.Models.Employee> Employee { get; set; } = default!;
+
+        // use plural for clarity and consistency
+        public DbSet<Employee> Employees { get; set; }
     }
 }

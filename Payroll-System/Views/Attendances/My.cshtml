@@ -1,0 +1,31 @@
+﻿@model IEnumerable<PayrollSystem.Web.Models.Attendance>
+
+@{
+    ViewData["Title"] = "My Attendance";
+}
+
+<h2>My Attendance</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Present</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var a in Model)
+        {
+            <tr>
+                <td>@a.Date.ToString("yyyy-MM-dd")</td>
+                <td>@(a.IsPresent ? "Yes" : "No")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No attendance records yet.</div>
+}
+

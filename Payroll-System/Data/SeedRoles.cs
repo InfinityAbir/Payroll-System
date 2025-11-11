@@ -1,14 +1,16 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿// PayrollSystem.Web/Data/SeedRoles.cs
+using Microsoft.AspNetCore.Identity;
+using System.Threading.Tasks;
 
 namespace PayrollSystem.Web.Data
 {
     public static class SeedRoles
     {
+        private static readonly string[] Roles = new[] { "Admin", "Manager", "Employee" };
+
         public static async Task InitializeRoles(RoleManager<IdentityRole> roleManager)
         {
-            string[] roles = { "Admin", "Employee" };
-
-            foreach (var role in roles)
+            foreach (var role in Roles)
             {
                 if (!await roleManager.RoleExistsAsync(role))
                 {

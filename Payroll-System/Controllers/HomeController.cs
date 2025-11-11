@@ -2,7 +2,8 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Payroll_System.Models;
 
-namespace Payroll_System.Controllers
+namespace PayrollSystem.Web.Controllers
+
 {
     public class HomeController : Controller
     {
